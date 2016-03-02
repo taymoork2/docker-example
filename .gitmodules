@@ -1,0 +1,7 @@
+[submodule "ammitips"]
+	path = ammitips
+	url = git@bitbucket.org:taymoork2/ammitips.git
+
+[submodule "1rupiya"]
+	path = 1rupiya
+	url = git@bitbucket.org:taymoork2/1rupiya.git

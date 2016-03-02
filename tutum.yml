@@ -1,0 +1,73 @@
+nginx:
+    image: tutum.co/taymoor/nginx
+    links:
+        - consul
+    ports:
+        - "80:80"
+        - "443:443"
+consul:
+    command: -bootstrap
+    image: gliderlabs/consul-server
+registrator:
+    command: consul://0.0.0.0:8500 -retry-attempts 10 -retry-interval 1000 -internal
+    image: gliderlabs/registrator
+    links:
+        - consul
+    volumes:
+        - "/var/run/docker.sock:/tmp/docker.sock"
+ammitips:
+    image: taymoor/ammitips
+    environment:
+        SERVICE_NAME: ammitips-container
+        PORT: "3030"
+    links:
+        - redis-ammitips
+        - postgres-ammitips
+    ports:
+        - "3030"
+1rupiya:
+    image: tutum.co/taymoor/1rupiya
+    environment:
+        SERVICE_NAME: 1rupiya-container
+        PORT: "3131"
+    links:
+        - redis-1rupiya
+        - postgres-1rupiya
+    ports:
+        - "3131"
+ghost:
+    image: tutum.co/taymoor/ghost
+    environment:
+        SERVICE_NAME: ghost-container
+    links:
+        - mariadb-ghost
+    ports:
+        - "2368:2368"
+gitlab:
+    image: gitlab/gitlab-ce
+    environment:
+        SERVICE_NAME: gitlab-container
+    ports:
+        - "4500:80"
+redis-ammitips:
+    image: tutum.co/taymoor/redis-ammitips
+    ports:
+        - "6370:6379"
+postgres-ammitips:
+    image: postgres
+    ports:
+        - "5430:5432"
+redis-1rupiya:
+    image: tutum.co/taymoor/redis-1rupiya
+    ports:
+        - "6371:6379"
+postgres-1rupiya:
+    image: postgres
+    ports:
+        - "5431:5432"
+mariadb-ghost:
+    image: mariadb
+    environment:
+        MYSQL_ROOT_DATABASE: ghost
+        MYSQL_ROOT_USER: ghost_admin_root
+        MYSQL_ROOT_PASSWORD: ghost_wordpass@admin01

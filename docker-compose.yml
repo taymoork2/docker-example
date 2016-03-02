@@ -1,0 +1,76 @@
+nginx:
+    build: ./docker/nginx
+    net: host
+    ports:
+        - "80:80"
+        - "443:443"
+consul:
+    command: -bootstrap
+    image: gliderlabs/consul-server
+    net: host
+registrator:
+    command: consul://0.0.0.0:8500 -retry-attempts 10 -retry-interval 1000 -internal
+    image: gliderlabs/registrator
+    net: host
+    volumes:
+        - "/var/run/docker.sock:/tmp/docker.sock"
+app1:
+    build: ./app1
+    environment:
+        SERVICE_NAME: app1-container
+        PORT: "3001"
+    links:
+        - redis-app1
+        - postgres-app1
+    ports:
+        - "3001"
+    volumes:
+        - "./app1:/app1"
+app2:
+    build: ./app2
+    environment:
+        SERVICE_NAME: app2-container
+        PORT: "4001"
+    links:
+        - redis-app2
+        - postgres-app2
+    ports:
+        - "4001"
+    volumes:
+        - "./app2:/app2"
+ghost:
+    build: ./docker/ghost
+    environment:
+        SERVICE_NAME: ghost-container
+    links:
+        - mariadb-ghost
+    ports:
+        - "2368:2368"
+gitlab:
+    image: gitlab/gitlab-ce
+    environment:
+        SERVICE_NAME: gitlab-container
+    ports:
+        - "4500:80"
+redis-app1:
+    build: ./docker/redis
+    ports:
+        - "6371:6379"
+postgres-app1:
+    image: postgres
+    ports:
+        - "5431:5432"
+redis-app2:
+    build: ./docker/redis
+    ports:
+        - "6372:6379"
+postgres-app2:
+    image: postgres
+    ports:
+        - "5432:5432"
+mariadb-ghost:
+    image: mariadb
+    environment:
+        MYSQL_ROOT_DATABASE: ghost
+        MYSQL_ROOT_USER: ghost_admin_root
+        MYSQL_ROOT_PASSWORD: ghost_wordpass@admin01

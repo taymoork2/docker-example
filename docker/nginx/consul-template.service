@@ -1,0 +1,5 @@
+#!/bin/sh
+
+exec consul-template \
+     -consul=0.0.0.0:8500 \
+     -template "/etc/consul-templates/config.conf:/etc/nginx/conf.d/config.conf:sv hup nginx || true"

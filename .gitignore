@@ -1,0 +1,25 @@
+newrelic_agent.log
+dump.rdb
+
+node_modules
+bower_components
+
+.settings/
+.settings/launch.json
+
+.idea
+
+.codenvy/
+.vagrant/
+.vagrant
+
+*-compiled*
+
+# Elastic Beanstalk Files
+
+.elasticbeanstalk/*
+
+!.elasticbeanstalk/*.cfg.yml
+
+!.elasticbeanstalk/*.global.yml
+
