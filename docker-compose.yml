@@ -67,7 +67,7 @@ redis-app2:
 postgres-app2:
     image: postgres
     ports:
-        - "5432:5432"
+        - "5433:5432"
 mariadb-ghost:
     image: mariadb
     environment:
