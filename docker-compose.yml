@@ -1,76 +1,110 @@
-nginx:
-    build: ./docker/nginx
-    net: host
-    ports:
-        - "80:80"
-        - "443:443"
-consul:
-    command: -bootstrap
-    image: gliderlabs/consul-server
-    net: host
-registrator:
-    command: consul://0.0.0.0:8500 -retry-attempts 10 -retry-interval 1000 -internal
-    image: gliderlabs/registrator
-    net: host
-    volumes:
-        - "/var/run/docker.sock:/tmp/docker.sock"
-app1:
-    build: ./app1
-    environment:
-        SERVICE_NAME: app1-container
-        PORT: "3001"
-    links:
-        - redis-app1
-        - postgres-app1
-    ports:
-        - "3001"
-    volumes:
-        - "./app1:/app1"
-app2:
-    build: ./app2
-    environment:
-        SERVICE_NAME: app2-container
-        PORT: "4001"
-    links:
-        - redis-app2
-        - postgres-app2
-    ports:
-        - "4001"
-    volumes:
-        - "./app2:/app2"
-ghost:
-    build: ./docker/ghost
-    environment:
-        SERVICE_NAME: ghost-container
-    links:
-        - mariadb-ghost
-    ports:
-        - "2368:2368"
-gitlab:
-    image: gitlab/gitlab-ce
-    environment:
-        SERVICE_NAME: gitlab-container
-    ports:
-        - "4500:80"
-redis-app1:
-    build: ./docker/redis
-    ports:
-        - "6371:6379"
-postgres-app1:
-    image: postgres
-    ports:
-        - "5431:5432"
-redis-app2:
-    build: ./docker/redis
-    ports:
-        - "6372:6379"
-postgres-app2:
-    image: postgres
-    ports:
-        - "5433:5432"
-mariadb-ghost:
-    image: mariadb
-    environment:
-        MYSQL_ROOT_DATABASE: ghost
-        MYSQL_ROOT_USER: ghost_admin_root
-        MYSQL_ROOT_PASSWORD: ghost_wordpass@admin01
+version: '2'
+services:
+    consul:
+        network_mode: "host"
+        image: gliderlabs/consul-server:latest
+        command: -bootstrap -advertise 192.168.99.100
+        ports:
+            - 8300:8300
+            - 8400:8400
+            - 8500:8500
+            - 8600:53/udp
+        environment:
+            - SERVICE_IGNORE=always
+    nginx:
+        build: dockerusername/nginx:latest
+        depends_on:
+            - consul
+        ports:
+            - "80:80"
+            - "443:443"
+        environment:
+            - SERVICE_IGNORE=always
+    redis-app1:
+        image: redis:latest
+        volumes:
+            - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+        command: redis-server /usr/local/etc/redis/redis.conf
+        ports:
+            - "6379:6379"
+        networks:
+            - backend-app1
+        environment:
+            - SERVICE_IGNORE=always
+    postgres-app1:
+        image: postgres:latest
+        ports:
+            - "5432:5432"
+        networks:
+            - backend-app1
+        environment:
+            - SERVICE_IGNORE=always
+	redis-app2:
+        image: redis:latest
+        volumes:
+            - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
+        command: redis-server /usr/local/etc/redis/redis.conf
+        ports:
+            - "6379:6379"
+        networks:
+            - backend-app2
+        environment:
+            - SERVICE_IGNORE=always
+    postgres-app2:
+        image: postgres:latest
+        ports:
+            - "5432:5432"
+        networks:
+            - backend-app2
+        environment:
+            - SERVICE_IGNORE=always
+    app1:
+        image: dockerusername/app1:latest
+        depends_on:
+            - redis-app1
+            - postgres-app1
+        links:
+            - redis-app1:redis
+            - postgres-app1:postgres
+        environment:
+            SERVICE_NAME: app1
+            PORT: "3030"
+            POSTGRESQL_URL: postgres://postgres:5432/app1
+            REDIS_URL: redis://:foobared@redis:6379/
+        networks:
+            - backend-app1
+        ports:
+            - "3030:3030"
+        restart: always
+	app2:
+        image: dockerusername/app2:latest
+        depends_on:
+            - redis-app2
+            - postgres-app2
+        links:
+            - redis-app2:redis
+            - postgres-app2:postgres
+        environment:
+            SERVICE_NAME: app2
+            PORT: "3030"
+            POSTGRESQL_URL: postgres://postgres:5432/app2
+            REDIS_URL: redis://:foobared@redis:6379/
+        networks:
+            - backend-app2
+        ports:
+            - "3030:3030"
+        restart: always
+    registrator:
+        network_mode: "host"
+        image: gliderlabs/registrator:latest
+        command: -internal -resync 15 consul://0.0.0.0:8500 -retry-attempts 10 -retry-interval 1000
+        restart: always
+        volumes:
+            - /var/run/docker.sock:/tmp/docker.sock
+        environment:
+          - SERVICE_IGNORE=always
+networks:
+    backend-app1:
+        driver: bridge
+	backend-app2:
+        driver: bridge

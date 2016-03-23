@@ -1,23 +1,24 @@
-FROM node
+FROM phusion/baseimage:latest
 
+# File Author / Maintainer
+MAINTAINER Maintainer
+
+# Use baseimage-docker's init process.
+CMD ["/sbin/my_init"]
+
+# Update System and install Utilites and Node
+RUN apt-get update && apt-get upgrade -y -o Dpkg::Options::="--force-confold"
+RUN add-apt-repository -y -r ppa:chris-lea/node.js
+RUN curl -sL https://deb.nodesource.com/setup_5.x | bash -
+RUN apt-get install -y build-essential libkrb5-dev make python git vim nodejs
 
 # Install global packages
-RUN npm install -g nodemon
-RUN npm install -g pm2
 RUN npm install -g babel
 RUN npm install -g babel-cli
 RUN npm install -g bower
+RUN npm install pm2@latest -g
+RUN pm2 update
 RUN pm2 set pm2:passwd 2pm_wordpass
-RUN pm2 install pm2-redis
-RUN pm2 install pm2-postgres
-RUN pm2 install pm2-webshell
-RUN pm2 set pm2-redis:hostname 0.0.0.0
-RUN pm2 set pm2-redis:port 6372
-RUN pm2 set pm2-postgres:hostname 0.0.0.0
-RUN pm2 set pm2-postgres:port 5432
-RUN pm2 conf pm2-webshell:bind 0.0.0.0
-RUN pm2 conf pm2-webshell:port 1337
-RUN pm2 conf pm2-webshell:password baz
 
 # Provides cached layer for node_modules
 ADD package.json /tmp/package.json
@@ -29,8 +30,8 @@ RUN mkdir -p /src && cp -a /tmp/node_modules /src/ && cp -a /tmp/bower_component
 WORKDIR /src
 ADD . /src
 
-# Expose port
-EXPOSE 4001
+# Clean up APT when done.
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Run app using nodemon
+# Start App
 CMD ["node", "/src/pm2_config.js"]

@@ -68,7 +68,8 @@ Vagrant.configure(2) do |config|
     sudo apt-get update
     curl -sL https://deb.nodesource.com/setup_5.x | sudo -E bash -
     sudo apt-get install -y nodejs nginx git zsh python-pip
-    sudo npm install -g npm bower nodemon
+    sudo npm install -g npm bower nodemon pm2@latest
+    sudo pm2 update
     sudo pip install awscli
     sudo curl -o /usr/local/bin/ecs-cli https://s3.amazonaws.com/amazon-ecs-cli/ecs-cli-linux-amd64-latest
     sudo chmod +x /usr/local/bin/ecs-cli

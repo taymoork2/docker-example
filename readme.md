@@ -1,6 +1,8 @@
 # My Docker Example and Usage
 ---
 
+Updated to use Version 2 of docker file
+
 ##### _This Docker project has been taken from a existing, working project and has been modified for public display_
 
 ###### Tech used
